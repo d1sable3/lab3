@@ -1,11 +1,5 @@
 #include <iostream>
-
-using namespace System;
-using namespace System::ComponentModel;
-using namespace System::Windows::Forms;
-using namespace System::Drawing;
-
-// ==================== НАТИВНІ КЛАСИ (логіка з ПЗ №3) ====================
+using namespace std;
 
 // Базовий абстрактний клас - бінарна логічна функція
 class LogicFunction
@@ -21,6 +15,7 @@ public:
 class And : public LogicFunction
 {
 public:
+    And() : LogicFunction() {}
     bool Calculation(bool x, bool y) override { return x && y; }
     const char* Name() override { return "AND"; }
 };
@@ -29,6 +24,7 @@ public:
 class Or : public LogicFunction
 {
 public:
+    Or() : LogicFunction() {}
     bool Calculation(bool x, bool y) override { return x || y; }
     const char* Name() override { return "OR"; }
 };
@@ -37,6 +33,7 @@ public:
 class Xor : public LogicFunction
 {
 public:
+    Xor() : LogicFunction() {}
     bool Calculation(bool x, bool y) override { return x != y; }
     const char* Name() override { return "XOR"; }
 };
@@ -45,11 +42,12 @@ public:
 class Nand : public LogicFunction
 {
 public:
+    Nand() : LogicFunction() {}
     bool Calculation(bool x, bool y) override { return !(x && y); }
     const char* Name() override { return "NAND"; }
 };
 
-// Вузол однозв'язного списку
+// Вузол односвязного списку
 struct Element
 {
     LogicFunction* item;
@@ -63,7 +61,10 @@ private:
     Element* first;
 
 public:
-    Container() { first = nullptr; }
+    Container()
+    {
+        first = nullptr;
+    }
 
     ~Container()
     {
@@ -77,40 +78,34 @@ public:
         }
     }
 
+    // Додавання нового елемента у початок списку
     void Add(LogicFunction* p)
     {
-        Element* node = new Element;
-        node->item = p;
-        node->next = nullptr;
-        if (first == nullptr) { first = node; return; }
-        Element* temp = first;
-        while (temp->next != nullptr) temp = temp->next;
-        temp->next = node;
+        Element* temp = new Element;
+        temp->item = p;
+        temp->next = first;
+        first = temp;
     }
 
-    int Count()
-    {
-        int c = 0;
-        for (Element* t = first; t != nullptr; t = t->next) c++;
-        return c;
-    }
-
-    LogicFunction* GetAt(int index)
+    // Виведення результату кожної функції для заданих аргументів (поліморфізм)
+    void PrintAll(bool x, bool y)
     {
         Element* temp = first;
-        int i = 0;
         while (temp != nullptr)
         {
-            if (i == index) return temp->item;
-            temp = temp->next; i++;
+            cout << temp->item->Name() << "(" << x << ", " << y << ") = "
+                 << temp->item->Calculation(x, y) << endl;
+            temp = temp->next;
         }
-        return nullptr;
     }
 
-    // Ключова функціональність: значення виразу через операцію &
+    // Ключова функціональність: значення логічного виразу,
+    // у якому між усіма функціями стоїть операція &
     bool EvaluateExpression(bool x, bool y)
     {
-        if (first == nullptr) return false;
+        if (first == nullptr)
+            return false;
+
         bool result = true;
         Element* temp = first;
         while (temp != nullptr)
@@ -122,161 +117,25 @@ public:
     }
 };
 
-// ==================== ВІЗУАЛЬНИЙ ІНТЕРФЕЙС (C++/CLI) ====================
-
-namespace LogicFunctions {
-
-    public ref class MainForm : public System::Windows::Forms::Form
-    {
-    public:
-        MainForm(void)
-        {
-            InitializeComponent();
-            container = new Container();
-            container->Add(new And);
-            container->Add(new Or);
-            container->Add(new Xor);
-            container->Add(new Nand);
-        }
-
-    protected:
-        ~MainForm()
-        {
-            if (components) { delete components; }
-            if (container) { delete container; container = nullptr; }
-        }
-
-    private:
-        Container* container;
-
-        System::Windows::Forms::Label^ labelTitle;
-        System::Windows::Forms::Label^ labelX;
-        System::Windows::Forms::Label^ labelY;
-        System::Windows::Forms::ComboBox^ comboX;
-        System::Windows::Forms::ComboBox^ comboY;
-        System::Windows::Forms::Button^ buttonCalc;
-        System::Windows::Forms::DataGridView^ gridResults;
-        System::Windows::Forms::Label^ labelExpr;
-        System::Windows::Forms::TextBox^ textExprResult;
-        System::ComponentModel::Container^ components;
-
-        void InitializeComponent(void)
-        {
-            this->labelTitle = gcnew Label();
-            this->labelX = gcnew Label();
-            this->labelY = gcnew Label();
-            this->comboX = gcnew ComboBox();
-            this->comboY = gcnew ComboBox();
-            this->buttonCalc = gcnew Button();
-            this->gridResults = gcnew DataGridView();
-            this->labelExpr = gcnew Label();
-            this->textExprResult = gcnew TextBox();
-            this->SuspendLayout();
-
-            this->labelTitle->AutoSize = true;
-            this->labelTitle->Font = gcnew System::Drawing::Font(L"Segoe UI", 12, FontStyle::Bold);
-            this->labelTitle->Location = System::Drawing::Point(20, 15);
-            this->labelTitle->Text = L"Калькулятор логічних функцій";
-
-            this->labelX->AutoSize = true;
-            this->labelX->Location = System::Drawing::Point(20, 60);
-            this->labelX->Text = L"Аргумент x:";
-
-            this->comboX->DropDownStyle = ComboBoxStyle::DropDownList;
-            this->comboX->Location = System::Drawing::Point(100, 57);
-            this->comboX->Size = System::Drawing::Size(50, 23);
-            this->comboX->Items->Add(L"0");
-            this->comboX->Items->Add(L"1");
-            this->comboX->SelectedIndex = 1;
-
-            this->labelY->AutoSize = true;
-            this->labelY->Location = System::Drawing::Point(180, 60);
-            this->labelY->Text = L"Аргумент y:";
-
-            this->comboY->DropDownStyle = ComboBoxStyle::DropDownList;
-            this->comboY->Location = System::Drawing::Point(260, 57);
-            this->comboY->Size = System::Drawing::Size(50, 23);
-            this->comboY->Items->Add(L"0");
-            this->comboY->Items->Add(L"1");
-            this->comboY->SelectedIndex = 0;
-
-            this->buttonCalc->Location = System::Drawing::Point(340, 55);
-            this->buttonCalc->Size = System::Drawing::Size(120, 28);
-            this->buttonCalc->Text = L"Обчислити";
-            this->buttonCalc->Click += gcnew System::EventHandler(this, &MainForm::buttonCalc_Click);
-
-            this->gridResults->Location = System::Drawing::Point(20, 100);
-            this->gridResults->Size = System::Drawing::Size(440, 160);
-            this->gridResults->AllowUserToAddRows = false;
-            this->gridResults->AllowUserToDeleteRows = false;
-            this->gridResults->ReadOnly = true;
-            this->gridResults->RowHeadersVisible = false;
-            this->gridResults->SelectionMode = DataGridViewSelectionMode::FullRowSelect;
-            this->gridResults->AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode::Fill;
-            this->gridResults->ColumnCount = 2;
-            this->gridResults->Columns[0]->Name = L"Функція";
-            this->gridResults->Columns[1]->Name = L"Результат";
-
-            this->labelExpr->AutoSize = true;
-            this->labelExpr->Location = System::Drawing::Point(20, 275);
-            this->labelExpr->Text = L"Значення виразу (усі функції через &):";
-
-            this->textExprResult->Location = System::Drawing::Point(280, 272);
-            this->textExprResult->Size = System::Drawing::Size(80, 23);
-            this->textExprResult->ReadOnly = true;
-            this->textExprResult->TextAlign = HorizontalAlignment::Center;
-            this->textExprResult->Font = gcnew System::Drawing::Font(L"Segoe UI", 10, FontStyle::Bold);
-
-            this->AutoScaleDimensions = System::Drawing::SizeF(7, 15);
-            this->AutoScaleMode = AutoScaleMode::Font;
-            this->ClientSize = System::Drawing::Size(480, 320);
-            this->Controls->Add(this->labelTitle);
-            this->Controls->Add(this->labelX);
-            this->Controls->Add(this->comboX);
-            this->Controls->Add(this->labelY);
-            this->Controls->Add(this->comboY);
-            this->Controls->Add(this->buttonCalc);
-            this->Controls->Add(this->gridResults);
-            this->Controls->Add(this->labelExpr);
-            this->Controls->Add(this->textExprResult);
-            this->FormBorderStyle = FormBorderStyle::FixedSingle;
-            this->MaximizeBox = false;
-            this->StartPosition = FormStartPosition::CenterScreen;
-            this->Text = L"Логічні функції — Варіант 7";
-            this->components = gcnew System::ComponentModel::Container();
-            this->ResumeLayout(false);
-            this->PerformLayout();
-        }
-
-        System::Void buttonCalc_Click(System::Object^ sender, System::EventArgs^ e)
-        {
-            bool x = (comboX->SelectedIndex == 1);
-            bool y = (comboY->SelectedIndex == 1);
-
-            gridResults->Rows->Clear();
-
-            for (int i = 0; i < container->Count(); i++)
-            {
-                LogicFunction* f = container->GetAt(i);
-                String^ name = gcnew String(f->Name());
-                bool res = f->Calculation(x, y);
-                gridResults->Rows->Add(name, res ? L"1" : L"0");
-            }
-
-            bool expr = container->EvaluateExpression(x, y);
-            textExprResult->Text = expr ? L"1" : L"0";
-        }
-    };
-}
-
-// ==================== ТОЧКА ВХОДУ ====================
-
-[STAThread]
-int main(array<String^>^ args)
+int main()
 {
-    Application::EnableVisualStyles();
-    Application::SetCompatibleTextRenderingDefault(false);
-    LogicFunctions::MainForm form;
-    Application::Run(% form);
+    Container container;
+    container.Add(new And);
+    container.Add(new Or);
+    container.Add(new Xor);
+    container.Add(new Nand);
+
+    bool x = 1;
+    bool y = 0;
+
+    cout << "Aргументи: x = " << x << ", y = " << y << endl << endl;
+
+    cout << "Результати окремих функцій:" << endl;
+    container.PrintAll(x, y);
+
+    cout << endl;
+    cout << "Значення виразу (всі функції через &): "
+         << container.EvaluateExpression(x, y) << endl;
+
     return 0;
 }
